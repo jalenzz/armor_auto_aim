@@ -1,3 +1,6 @@
+#ifndef ARMOR_DETECTOR_DETECTOR_HPP
+#define ARMOR_DETECTOR_DETECTOR_HPP
+
 #include "armor_detector/armor.hpp"
 #include "vector"
 
@@ -76,3 +79,5 @@ private:
 };
 
 } // namespace armor
+
+#endif // ARMOR_DETECTOR_DETECTOR_HPP_

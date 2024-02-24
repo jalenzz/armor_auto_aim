@@ -1,3 +1,6 @@
+#ifndef ARMOR_DETECTOR_DETECTOR_NODE_HPP
+#define ARMOR_DETECTOR_DETECTOR_NODE_HPP
+
 #include <rclcpp/rclcpp.hpp>
 
 namespace armor {
@@ -9,3 +12,5 @@ private:
     // ...
 };
 } // namespace armor
+
+#endif // ARMOR_DETECTOR_DETECTOR_NODE_HPP
