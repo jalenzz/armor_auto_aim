@@ -72,6 +72,8 @@ struct Armor {
 
     cv::Mat number_image;
     std::string number;
+    float confidence;
+    std::string classfication_result;
 };
 
 } // namespace armor

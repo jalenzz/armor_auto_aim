@@ -1,23 +1,39 @@
 #include "armor_detector/detector.hpp"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 
 namespace armor {
 Detector::Detector(
     int binary_threshold,
     int contour_thres,
     Color enemy_color,
+    std::string model_path,
+    std::string label_path,
+    float classifier_threshold,
+    std::vector<std::string> ignore_classes,
     cv::Mat kernel
 ):
     binary_threshold_(binary_threshold),
     contour_thres_(contour_thres),
     enemy_color_(enemy_color),
-    kernel_(kernel) {}
+    kernel_(kernel) {
+    auto pkg_path = ament_index_cpp::get_package_share_directory("armor_detector");
+    this->classifier_ = std::make_unique<NumberClassifier>(
+        pkg_path + model_path,
+        pkg_path + label_path,
+        classifier_threshold,
+        ignore_classes
+    );
+}
 
 std::vector<Armor> Detector::DetectArmor(const cv::Mat& input) {
     this->preprocessed_image_ = PreprocessImage(input);
     this->lights_ = DetectLight(input);
     this->armors_ = FilterArmor(lights_);
 
-    // TODO: classifying number of armors
+    if (!armors_.empty()) {
+        this->classifier_->ExtractNumbers(input, armors_);
+        this->classifier_->Classify(armors_);
+    }
 
     return this->armors_;
 }
@@ -71,13 +87,6 @@ std::vector<Light> Detector::DetectLight(const cv::Mat& input) {
             continue;
         }
         lights.push_back(light);
-
-        cv::Point2f vertices[4];
-        light_box.points(vertices);
-        for (int i = 0; i < 4; i++) {
-            cv::line(input, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
-        }
-        cv::putText(input, std::to_string(light.tilt_angle), light.center, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
     }
 
     return lights;
@@ -101,7 +110,7 @@ std::vector<Armor> Detector::FilterArmor(const std::vector<Light>& lights) {
 }
 
 bool Detector::IsLight(const Light& light) {
-    return (light.length > light.width * 1.5) && (light.size.area() > 200);
+    return (light.length > light.width * 3) && (light.size.area() > 100);
 }
 
 ArmorType Detector::CanFormArmor(const Light& left_light, const Light& right_light) {

@@ -5,6 +5,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -21,4 +23,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE armor_detector_node
 )
 
-ament_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+  model
+)

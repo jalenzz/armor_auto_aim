@@ -1,8 +1,10 @@
 #ifndef ARMOR_DETECTOR_DETECTOR_HPP
 #define ARMOR_DETECTOR_DETECTOR_HPP
 
+#include <vector>
+
 #include "armor_detector/armor.hpp"
-#include "vector"
+#include "armor_detector/number_classifier.hpp"
 
 namespace armor {
 
@@ -12,6 +14,10 @@ public:
         int binary_threshold,
         int contour_thres,
         Color enemy_color,
+        std::string model_path,
+        std::string label_path,
+        float classifier_threshold,
+        std::vector<std::string> ignore_classes = {},
         cv::Mat kernel = cv::Mat::ones(5, 5, CV_8U)
     );
 
@@ -76,6 +82,8 @@ private:
     int contour_thres_;    // 对通道相减后的灯条轮廓图进行二值化的阈值
     Color enemy_color_;    // 敌方颜色
     cv::Mat kernel_;       // 膨胀核
+
+    std::unique_ptr<NumberClassifier> classifier_;
 };
 
 } // namespace armor
