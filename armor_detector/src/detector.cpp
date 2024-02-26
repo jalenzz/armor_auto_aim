@@ -52,6 +52,7 @@ void Detector::DrawResult(const cv::Mat& input) {
         cv::line(input, armor.left_light.top, armor.right_light.bottom, cv::Scalar(0, 255, 0), 2);
         cv::line(input, armor.left_light.bottom, armor.right_light.top, cv::Scalar(0, 255, 0), 2);
         cv::circle(input, armor.center, 3, cv::Scalar(0, 255, 0), 2);
+        cv::putText(input, armor.number, armor.center, cv::FONT_HERSHEY_SIMPLEX, 2.5, cv::Scalar(255, 0, 0), 2);
     }
 }
 
@@ -71,18 +72,25 @@ std::vector<Light> Detector::DetectLight(const cv::Mat& input) {
         cv::subtract(this->channels_[0], this->channels_[2], this->color_mask_);
     }
     cv::threshold(this->color_mask_, this->light_contour_binary_image_, this->contour_thres_, 255, cv::THRESH_BINARY);
+
+    cv::dilate(this->light_contour_binary_image_, this->light_contour_binary_image_, this->kernel_);
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(this->light_contour_binary_image_, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    for (size_t i = 0; i < contours.size(); i++) {
+        cv::fillPoly(light_contour_binary_image_, contours, cv::Scalar(255));
+    }
+
     cv::bitwise_and(this->preprocessed_image_, this->light_contour_binary_image_, this->light_contour_binary_image_);
 
     std::vector<Light> lights;
-    std::vector<std::vector<cv::Point>> contours;
+    contours.clear();
     cv::findContours(this->light_contour_binary_image_, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     for (const auto& contour: contours) {
         if (contour.size() < 4) {
             continue;
         }
-        auto light_box = cv::minAreaRect(contour);
 
-        Light light(light_box);
+        Light light(cv::minAreaRect(contour));
         if (IsLight(light) == false) {
             continue;
         }
@@ -118,18 +126,18 @@ ArmorType Detector::CanFormArmor(const Light& left_light, const Light& right_lig
     float height_ratio = (left_light.length > right_light.length)
         ? (left_light.length / right_light.length)
         : (right_light.length / left_light.length);
-    bool is_height_ratio_valid = height_ratio > 0.8;
+    bool height_ratio_valid = height_ratio > 0.8;
 
     // 两灯条的角度差
     float light_angle_diff = std::abs(left_light.tilt_angle - right_light.tilt_angle);
-    bool is_light_angle_diff_valid = light_angle_diff < 10;
+    bool light_angle_diff_valid = light_angle_diff < 10;
 
     // 装甲板倾斜角度
     cv::Point2f diff = left_light.center - right_light.center;
     float armor_angle = std::abs(std::atan(diff.y / diff.x)) / CV_PI * 180;
-    bool is_armor_angle_valid = armor_angle < 30;
+    bool armor_angle_valid = armor_angle < 30;
 
-    if (is_height_ratio_valid && is_light_angle_diff_valid && is_armor_angle_valid) {
+    if (height_ratio_valid && light_angle_diff_valid && armor_angle_valid) {
         float average_light_length = (left_light.length + right_light.length) / 2;
         // 两灯条中心点距离 / 平均灯条长度
         float center_distance = cv::norm(left_light.center - right_light.center) / average_light_length;
