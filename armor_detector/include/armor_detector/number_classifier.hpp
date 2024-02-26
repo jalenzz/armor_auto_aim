@@ -1,9 +1,4 @@
-#ifndef ARMOR_DETECTOR_NUMBER_CLASSIFIER_HPP_
-#define ARMOR_DETECTOR_NUMBER_CLASSIFIER_HPP_
-
-#include <opencv2/opencv.hpp>
-#include <string>
-#include <vector>
+#pragma once
 
 #include "armor_detector/armor.hpp"
 
@@ -39,5 +34,3 @@ private:
     std::vector<std::string> ignore_classes_; // 忽略的类别
 };
 } // namespace armor
-
-#endif // ARMOR_DETECTOR_NUMBER_CLASSIFIER_HPP_

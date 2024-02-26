@@ -1,7 +1,4 @@
-#ifndef ARMOR_DETECTOR_DETECTOR_HPP
-#define ARMOR_DETECTOR_DETECTOR_HPP
-
-#include <vector>
+#pragma once
 
 #include "armor_detector/armor.hpp"
 #include "armor_detector/number_classifier.hpp"
@@ -87,5 +84,3 @@ private:
 };
 
 } // namespace armor
-
-#endif // ARMOR_DETECTOR_DETECTOR_HPP_

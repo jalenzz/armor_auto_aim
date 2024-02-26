@@ -1,5 +1,4 @@
-#ifndef ARMOR_DETECTOR_ARMOR_HPP
-#define ARMOR_DETECTOR_ARMOR_HPP
+#pragma once
 
 #include "opencv2/opencv.hpp"
 
@@ -77,5 +76,3 @@ struct Armor {
 };
 
 } // namespace armor
-
-#endif // ARMOR_DEETCTOR_ARMOR_HPP

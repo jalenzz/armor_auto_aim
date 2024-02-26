@@ -1,5 +1,4 @@
 #include <fstream>
-#include <opencv2/opencv.hpp>
 
 #include "armor_detector/armor.hpp"
 #include "armor_detector/number_classifier.hpp"
@@ -51,10 +50,6 @@ void NumberClassifier::ExtractNumbers(const cv::Mat& src, std::vector<Armor>& ar
 
         // 获取数字 ROI
         number_image = number_image(cv::Rect(cv::Point((warp_width - roi_size.width) / 2, 0), roi_size));
-        cv::namedWindow("roi", cv::WINDOW_NORMAL);
-        cv::resizeWindow("roi", 200, 200);
-        cv::imshow("roi", number_image);
-        cv::waitKey(1);
 
         // 二值化
         cv::cvtColor(number_image, number_image, cv::COLOR_RGB2GRAY);
