@@ -87,13 +87,13 @@ void NumberClassifier::Classify(std::vector<Armor>& armors) {
         minMaxLoc(softmax_prob.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
         int label_id = class_id_point.x;
 
-        armor.confidence = confidence;
+        armor.classification_confidence = confidence;
         armor.number = class_names_[label_id];
 
         std::stringstream result_ss;
         result_ss << armor.number << ": " << std::fixed << std::setprecision(1)
-                  << armor.confidence * 100.0 << "%";
-        armor.classfication_result = result_ss.str();
+                  << armor.classification_confidence * 100.0 << "%";
+        armor.classification_result = result_ss.str();
     }
 
     // erase 删除从 first 到 last 之间
@@ -106,7 +106,7 @@ void NumberClassifier::Classify(std::vector<Armor>& armors) {
             armors.end(),
             [this](const Armor& armor) {
                 // 装甲板置信度过低
-                if (armor.confidence < confidence_threshold_) {
+                if (armor.classification_confidence < confidence_threshold_) {
                     return true;
                 }
 

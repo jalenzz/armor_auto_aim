@@ -2,6 +2,7 @@
 
 #include "armor_detector/armor.hpp"
 #include "armor_detector/number_classifier.hpp"
+#include "armor_detector/pnp_solver.hpp"
 
 namespace armor {
 
@@ -14,6 +15,8 @@ public:
         std::string model_path,
         std::string label_path,
         float classifier_threshold,
+        const std::array<double, 9>& camera_matrix,
+        const std::vector<double>& distortion_coefficients,
         std::vector<std::string> ignore_classes = {},
         cv::Mat kernel = cv::Mat::ones(5, 5, CV_8U)
     );
@@ -81,6 +84,7 @@ private:
     cv::Mat kernel_;       // 膨胀核
 
     std::unique_ptr<NumberClassifier> classifier_;
+    std::unique_ptr<PnPSolver> pnp_solver_;
 };
 
 } // namespace armor

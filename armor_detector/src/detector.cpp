@@ -9,6 +9,8 @@ Detector::Detector(
     std::string model_path,
     std::string label_path,
     float classifier_threshold,
+    const std::array<double, 9>& camera_matrix,
+    const std::vector<double>& distortion_coefficients,
     std::vector<std::string> ignore_classes,
     cv::Mat kernel
 ):
@@ -23,6 +25,7 @@ Detector::Detector(
         classifier_threshold,
         ignore_classes
     );
+    this->pnp_solver_ = std::make_unique<PnPSolver>(camera_matrix, distortion_coefficients);
 }
 
 std::vector<Armor> Detector::DetectArmor(const cv::Mat& input) {
@@ -33,6 +36,10 @@ std::vector<Armor> Detector::DetectArmor(const cv::Mat& input) {
     if (!armors_.empty()) {
         this->classifier_->ExtractNumbers(input, armors_);
         this->classifier_->Classify(armors_);
+
+        for (auto& armor: armors_) {
+            this->pnp_solver_->CalculatePose(armor);
+        }
     }
 
     return this->armors_;
