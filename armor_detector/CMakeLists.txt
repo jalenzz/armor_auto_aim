@@ -23,6 +23,17 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE armor_detector_node
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(detector_test test/detector_test.cpp)
+  target_include_directories(detector_test PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  target_link_libraries(detector_test ${PROJECT_NAME})
+endif()
+
 ament_auto_package(
   INSTALL_TO_SHARE
   model
