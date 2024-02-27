@@ -4,7 +4,7 @@
 TEST(DetectorTest, TestDetectArmor) {
     // read video
     cv::Mat frame;
-    cv::VideoCapture cap("../../armor_detector/test/test.mp4");
+    cv::VideoCapture cap("../../armor_detector/test/video/test.mp4");
     // cv::namedWindow("result", cv::WINDOW_NORMAL);
     // cv::resizeWindow("result", 600, 600);
 

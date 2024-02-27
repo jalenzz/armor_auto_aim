@@ -3,3 +3,4 @@ install
 log
 .vscode
 .cache
+armor_detector/test/video
