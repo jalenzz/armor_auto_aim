@@ -10,14 +10,23 @@ class Detector {
 public:
     Detector(
         int binary_threshold,
-        int contour_thres,
+        int light_contour_threshold,
         Color enemy_color,
         std::string model_path,
         std::string label_path,
-        float classifier_threshold,
-        const std::array<double, 9>& camera_matrix,
+        float confidence_threshold,
+        const std::vector<double>& camera_matrix,
         const std::vector<double>& distortion_coefficients,
         std::vector<std::string> ignore_classes = {},
+        cv::Mat kernel = cv::Mat::ones(5, 5, CV_8U)
+    );
+
+    Detector(
+        int binary_threshold,
+        int light_contour_threshold,
+        Color enemy_color,
+        std::unique_ptr<NumberClassifier> classifier,
+        std::unique_ptr<PnPSolver> pnp_solver,
         cv::Mat kernel = cv::Mat::ones(5, 5, CV_8U)
     );
 
@@ -78,10 +87,10 @@ private:
     std::vector<Light> lights_;          // 灯条集合
     std::vector<Armor> armors_;          // 装甲板集合
 
-    int binary_threshold_; // 原图二值化阈值
-    int contour_thres_;    // 对通道相减后的灯条轮廓图进行二值化的阈值
-    Color enemy_color_;    // 敌方颜色
-    cv::Mat kernel_;       // 膨胀核
+    int binary_threshold_;        // 原图二值化阈值
+    int light_contour_threshold_; // 对通道相减后的灯条轮廓图进行二值化的阈值
+    Color enemy_color_;           // 敌方颜色
+    cv::Mat kernel_;              // 膨胀核
 
     std::unique_ptr<NumberClassifier> classifier_;
     std::unique_ptr<PnPSolver> pnp_solver_;

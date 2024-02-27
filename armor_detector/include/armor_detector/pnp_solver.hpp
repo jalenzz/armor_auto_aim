@@ -7,7 +7,7 @@ namespace armor {
 class PnPSolver {
 public:
     explicit PnPSolver(
-        const std::array<double, 9>& camera_matrix,
+        const std::vector<double>& camera_matrix,
         const std::vector<double>& distortion_coefficients
     );
 

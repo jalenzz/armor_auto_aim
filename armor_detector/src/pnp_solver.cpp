@@ -6,7 +6,7 @@
 namespace armor {
 
 PnPSolver::PnPSolver(
-    const std::array<double, 9>& camera_matrix,
+    const std::vector<double>& camera_matrix,
     const std::vector<double>& distortion_coefficients
 ):
     camera_matrix_(cv::Mat(3, 3, CV_64F, const_cast<double*>(camera_matrix.data())).clone()),

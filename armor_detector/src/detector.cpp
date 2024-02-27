@@ -1,32 +1,40 @@
 #include "armor_detector/detector.hpp"
-#include "ament_index_cpp/get_package_share_directory.hpp"
 
 namespace armor {
 Detector::Detector(
     int binary_threshold,
-    int contour_thres,
+    int light_contour_threshold,
     Color enemy_color,
     std::string model_path,
     std::string label_path,
-    float classifier_threshold,
-    const std::array<double, 9>& camera_matrix,
+    float confidence_threshold,
+    const std::vector<double>& camera_matrix,
     const std::vector<double>& distortion_coefficients,
     std::vector<std::string> ignore_classes,
     cv::Mat kernel
 ):
     binary_threshold_(binary_threshold),
-    contour_thres_(contour_thres),
+    light_contour_threshold_(light_contour_threshold),
     enemy_color_(enemy_color),
     kernel_(kernel) {
-    auto pkg_path = ament_index_cpp::get_package_share_directory("armor_detector");
-    this->classifier_ = std::make_unique<NumberClassifier>(
-        pkg_path + model_path,
-        pkg_path + label_path,
-        classifier_threshold,
-        ignore_classes
-    );
+    this->classifier_ = std::make_unique<NumberClassifier>(model_path, label_path, confidence_threshold, ignore_classes);
     this->pnp_solver_ = std::make_unique<PnPSolver>(camera_matrix, distortion_coefficients);
 }
+
+Detector::Detector(
+    int binary_threshold,
+    int light_contour_threshold,
+    Color enemy_color,
+    std::unique_ptr<NumberClassifier> classifier,
+    std::unique_ptr<PnPSolver> pnp_solver,
+    cv::Mat kernel
+):
+    binary_threshold_(binary_threshold),
+    light_contour_threshold_(light_contour_threshold),
+    enemy_color_(enemy_color),
+    kernel_(kernel),
+    classifier_(std::move(classifier)),
+    pnp_solver_(std::move(pnp_solver)) {}
 
 std::vector<Armor> Detector::DetectArmor(const cv::Mat& input) {
     this->preprocessed_image_ = PreprocessImage(input);
@@ -78,7 +86,7 @@ std::vector<Light> Detector::DetectLight(const cv::Mat& input) {
     } else {
         cv::subtract(this->channels_[0], this->channels_[2], this->color_mask_);
     }
-    cv::threshold(this->color_mask_, this->light_contour_binary_image_, this->contour_thres_, 255, cv::THRESH_BINARY);
+    cv::threshold(this->color_mask_, this->light_contour_binary_image_, this->light_contour_threshold_, 255, cv::THRESH_BINARY);
 
     cv::dilate(this->light_contour_binary_image_, this->light_contour_binary_image_, this->kernel_);
     std::vector<std::vector<cv::Point>> contours;
