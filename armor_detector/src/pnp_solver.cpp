@@ -41,6 +41,8 @@ void PnPSolver::CalculatePose(Armor& armor) {
     armor.distance_to_image_center = cv::norm(
         armor.center - cv::Point2f(camera_matrix_.at<double>(0, 2), camera_matrix_.at<double>(1, 2))
     );
+
+    armor.distance_to_center = CalculateDistanceToCenter(armor.center);
 }
 
 void PnPSolver::SolvePnP(const Armor& armor) {
@@ -63,5 +65,11 @@ void PnPSolver::SolvePnP(const Armor& armor) {
         false,
         cv::SOLVEPNP_IPPE
     );
+}
+
+float PnPSolver::CalculateDistanceToCenter(const cv::Point2f& armor_center) {
+    float cx = camera_matrix_.at<double>(0, 2); // 光学中心 x
+    float cy = camera_matrix_.at<double>(1, 2); // 光学中心 y
+    return cv::norm(armor_center - cv::Point2f(cx, cy));
 }
 } // namespace armor

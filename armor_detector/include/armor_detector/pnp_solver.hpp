@@ -19,6 +19,15 @@ public:
      */
     void CalculatePose(Armor& armor);
 
+    /**
+     * @brief 计算装甲板中心到图像中心的距离
+     *
+     * @param image_point 装甲板中心点
+     *
+     * @return float 距离 
+     */
+    float CalculateDistanceToCenter(const cv::Point2f& armor_center);
+
 private:
     cv::Mat camera_matrix_;
     cv::Mat distortion_coefficients_;

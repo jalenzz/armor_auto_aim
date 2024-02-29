@@ -16,6 +16,12 @@ enum class ArmorType {
     INVALID
 };
 
+const std::string ARMOR_TYPE_STR[3] = {
+    "small",
+    "large",
+    "invalid"
+};
+
 // clang-format off
 const float SMALL_ARMOR_WIDTH  = 0.135;
 const float SMALL_ARMOR_HEIGHT = 0.055;
@@ -70,6 +76,8 @@ struct Light: public cv::RotatedRect {
 
     cv::Point2f point[4];    // 灯条四个角点坐标
     cv::Point2f top, bottom; // 灯条上下边框中点坐标
+    bool valid = false;      // 是否为有效灯条
+    float ratio;             // 灯条宽高比
     float length;            // 灯条长度
     float width;             // 灯条宽度
     float tilt_angle;        // 灯条倾斜角度，相对于垂直面，向右倾斜为正
@@ -77,16 +85,30 @@ struct Light: public cv::RotatedRect {
 
 struct Armor {
     Armor() = default;
-    explicit Armor(const Light& left_light, const Light& right_light, ArmorType type) {
-        this->type = type;
+    explicit Armor(const Light& left_light, const Light& right_light) {
         this->left_light = left_light;
         this->right_light = right_light;
         this->center = (left_light.center + right_light.center) / 2;
+
+        light_height_ratio = (left_light.length > right_light.length)
+            ? (left_light.length / right_light.length)
+            : (right_light.length / left_light.length);
+        light_angle_diff = std::abs(left_light.tilt_angle - right_light.tilt_angle);
+        cv::Point2f&& diff = left_light.center - right_light.center;
+        angle = std::abs(std::atan(diff.y / diff.x)) / CV_PI * 180;
+
+        float&& average_light_length = (left_light.length + right_light.length) / 2;
+        light_center_distance = cv::norm(left_light.center - right_light.center) / average_light_length;
     }
 
     Light left_light, right_light;
-    ArmorType type;
+    ArmorType type = ArmorType::INVALID;
     cv::Point2f center;
+    float angle;                 // 装甲板倾斜角度
+    float light_angle_diff;      // 两灯条的角度差
+    float light_height_ratio;    // 两灯条的高度比
+    float light_center_distance; // 两灯条中心点距离 / 平均灯条长度
+    float distance_to_center;    // 装甲板中心到图像中心的距离
 
     cv::Mat number_image;
     std::string number;
