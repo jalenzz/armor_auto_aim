@@ -49,6 +49,11 @@ public:
     inline std::vector<Light> GetDebugLights() const {
         return debug_lights_;
     }
+    inline cv::Mat GetBinaryImage() const {
+        return light_contour_binary_image_;
+    }
+
+    cv::Mat GetAllNumbersImage();
 
 private:
     /**

@@ -17,8 +17,8 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
     debug_param_sub_ = std::make_shared<rclcpp::ParameterEventHandler>(this);
     debug_cb_handle_ = debug_param_sub_->add_parameter_callback(
         "debug",
-        [this](const rclcpp::Parameter& p) {
-            debug_ = p.as_bool();
+        [this](const rclcpp::Parameter& param) {
+            debug_ = param.as_bool();
             debug_ ? CreateDebugPublishers() : DestroyDebugPublishers();
         }
     );
@@ -33,8 +33,10 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
             if (debug_) {
                 UpdateDetectorParameters();
                 armors = detector_->DetectArmor(raw_image);
-                detector_->DrawResult(raw_image);
-                PublishDebugInfo(armors);
+
+                result_image_ = raw_image.clone();
+                detector_->DrawResult(result_image_);
+                PublishDebugInfo(msg);
             } else {
                 armors = detector_->DetectArmor(raw_image);
             }
@@ -52,6 +54,7 @@ std::unique_ptr<Detector> ArmorDetectorNode::CreateDetector() {
     param_desc.integer_range[0].to_value = 255;
     auto&& binary_threshold = declare_parameter("binary_threshold", 100, param_desc);
     auto&& light_contour_threshold = declare_parameter("light_contour_threshold", 100, param_desc);
+
     auto&& enemy_color = declare_parameter("enemy_color", 'r');
     auto&& confidence_threshold = declare_parameter("confidence_threshold", 0.7);
     auto&& camera_matrix = declare_parameter("camera_matrix", std::vector<double> { 1302.9388992859376, 0, 609.2298064340857, 0, 2515.6912302455735, 467.0345949712323, 0, 0, 1 });
@@ -74,15 +77,71 @@ std::unique_ptr<Detector> ArmorDetectorNode::CreateDetector() {
     );
 }
 
-void ArmorDetectorNode::CreateDebugPublishers() {}
+void ArmorDetectorNode::CreateDebugPublishers() {
+    debug_lights_pub_ = create_publisher<auto_aim_interfaces::msg::DebugLights>("/detector/debug_lights", 10);
+    debug_armors_pub_ = create_publisher<auto_aim_interfaces::msg::DebugArmors>("/detector/debug_armors", 10);
+    binary_img_pub_ = image_transport::create_publisher(this, "/detector/binary_img");
+    number_img_pub_ = image_transport::create_publisher(this, "/detector/number_img");
+    result_img_pub_ = image_transport::create_publisher(this, "/detector/result_img");
+}
 
-void ArmorDetectorNode::DestroyDebugPublishers() {}
+void ArmorDetectorNode::DestroyDebugPublishers() {
+    debug_lights_pub_.reset();
+    debug_armors_pub_.reset();
+    binary_img_pub_.shutdown();
+    number_img_pub_.shutdown();
+    result_img_pub_.shutdown();
+}
 
 void ArmorDetectorNode::UpdateDetectorParameters() {}
 
-void ArmorDetectorNode::PublishDebugInfo(std::vector<Armor>& armors) {}
+void ArmorDetectorNode::PublishDebugInfo(const sensor_msgs::msg::Image::SharedPtr& image_msg) {
+    binary_img_pub_.publish(cv_bridge::CvImage(image_msg->header, "mono8", detector_->GetBinaryImage()).toImageMsg());
+    number_img_pub_.publish(cv_bridge::CvImage(image_msg->header, "mono8", detector_->GetAllNumbersImage()).toImageMsg());
+    result_img_pub_.publish(cv_bridge::CvImage(image_msg->header, "mono8", result_image_).toImageMsg());
 
-void ArmorDetectorNode::PublishArmors(std::vector<Armor>& armors) {}
+    auto_aim_interfaces::msg::DebugArmors debug_armors_msg;
+    auto_aim_interfaces::msg::DebugLights debug_lights_msg;
+    auto&& debug_lights = detector_->GetDebugLights();
+    auto&& debug_armors = detector_->GetDebugArmors();
+
+    for (auto& light: debug_lights) {
+        auto_aim_interfaces::msg::DebugLight debug_light_msg;
+        debug_light_msg.set__tilt_angle(light.tilt_angle);
+        debug_light_msg.set__center_x(light.center.x);
+        debug_light_msg.set__ratio(light.ratio);
+        debug_light_msg.set__is_light(light.valid);
+        debug_lights_msg.data.push_back(debug_light_msg);
+    }
+
+    for (auto& armor: debug_armors) {
+        auto_aim_interfaces::msg::DebugArmor debug_armor_msg;
+        debug_armor_msg.set__center_x(armor.center.x);
+        debug_armor_msg.set__type(ARMOR_TYPE_STR[static_cast<int>(armor.type)]);
+        debug_armor_msg.set__light_center_distance(armor.light_center_distance);
+        debug_armor_msg.set__light_height_ratio(armor.light_height_ratio);
+        debug_armor_msg.set__light_angle_diff(armor.light_angle_diff);
+        debug_armor_msg.set__angle(armor.angle);
+        debug_armors_msg.data.push_back(debug_armor_msg);
+    }
+
+    debug_lights_pub_->publish(debug_lights_msg);
+    debug_armors_pub_->publish(debug_armors_msg);
+}
+
+void ArmorDetectorNode::PublishArmors(std::vector<Armor>& armors) {
+    auto_aim_interfaces::msg::Armors armors_msg;
+    for (auto& armor: armors) {
+        auto_aim_interfaces::msg::Armor armor_msg;
+        armor_msg.set__number(armor.number);
+        armor_msg.set__type(ARMOR_TYPE_STR[static_cast<int>(armor.type)]);
+        armor_msg.set__distance_to_image_center(armor.distance_to_image_center);
+        armor_msg.set__pose(armor.pose);
+        armors_msg.armors.push_back(armor_msg);
+    }
+
+    armors_pub_->publish(armors_msg);
+}
 
 } // namespace armor
 

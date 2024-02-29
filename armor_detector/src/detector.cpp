@@ -53,24 +53,6 @@ std::vector<Armor> Detector::DetectArmor(const cv::Mat& input) {
     return armors_;
 }
 
-void Detector::DrawResult(const cv::Mat& input) {
-    for (const auto& light: lights_) {
-        cv::Point2f vertices[4];
-        light.points(vertices);
-        for (int i = 0; i < 4; i++) {
-            cv::line(input, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
-        }
-        cv::putText(input, std::to_string(light.tilt_angle), light.center, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
-    }
-
-    for (const auto& armor: armors_) {
-        cv::line(input, armor.left_light.top, armor.right_light.bottom, cv::Scalar(0, 255, 0), 2);
-        cv::line(input, armor.left_light.bottom, armor.right_light.top, cv::Scalar(0, 255, 0), 2);
-        cv::circle(input, armor.center, 3, cv::Scalar(0, 255, 0), 2);
-        cv::putText(input, armor.number, armor.center, cv::FONT_HERSHEY_SIMPLEX, 2.5, cv::Scalar(255, 0, 0), 2);
-    }
-}
-
 cv::Mat Detector::PreprocessImage(const cv::Mat& input) {
     cv::Mat gray, binary;
     cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
@@ -153,6 +135,39 @@ Armor Detector::FormArmor(const Light& left_light, const Light& right_light) {
 
     debug_armors_.push_back(armor);
     return armor;
+}
+
+cv::Mat Detector::GetAllNumbersImage() {
+    if (armors_.empty()) {
+        return cv::Mat(cv::Size(20, 28), CV_8UC1);
+    } else {
+        std::vector<cv::Mat> number_imgs;
+        number_imgs.reserve(armors_.size());
+        for (auto& armor: armors_) {
+            number_imgs.emplace_back(armor.number_image);
+        }
+        cv::Mat all_num_img;
+        cv::vconcat(number_imgs, all_num_img);
+        return all_num_img;
+    }
+}
+
+void Detector::DrawResult(const cv::Mat& input) {
+    for (const auto& light: lights_) {
+        cv::Point2f vertices[4];
+        light.points(vertices);
+        for (int i = 0; i < 4; i++) {
+            cv::line(input, vertices[i], vertices[(i + 1) % 4], cv::Scalar(0, 255, 0), 2);
+        }
+        cv::putText(input, std::to_string(light.tilt_angle), light.center, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2);
+    }
+
+    for (const auto& armor: armors_) {
+        cv::line(input, armor.left_light.top, armor.right_light.bottom, cv::Scalar(0, 255, 0), 2);
+        cv::line(input, armor.left_light.bottom, armor.right_light.top, cv::Scalar(0, 255, 0), 2);
+        cv::circle(input, armor.center, 3, cv::Scalar(0, 255, 0), 2);
+        cv::putText(input, armor.number, armor.center, cv::FONT_HERSHEY_SIMPLEX, 2.5, cv::Scalar(255, 0, 0), 2);
+    }
 }
 
 } // namespace armor
