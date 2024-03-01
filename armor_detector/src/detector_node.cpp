@@ -24,6 +24,8 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
         }
     );
 
+    armors_pub_ = create_publisher<auto_aim_interfaces::msg::Armors>("/detector/armors", rclcpp::SensorDataQoS());
+
     image_sub_ = create_subscription<sensor_msgs::msg::Image>(
         "image",
         rclcpp::SensorDataQoS(),
