@@ -27,7 +27,7 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
     armors_pub_ = create_publisher<auto_aim_interfaces::msg::Armors>("/detector/armors", rclcpp::SensorDataQoS());
 
     image_sub_ = create_subscription<sensor_msgs::msg::Image>(
-        "image",
+        "image_pub",
         rclcpp::SensorDataQoS(),
         [this](const sensor_msgs::msg::Image::SharedPtr msg) {
             auto&& raw_image = cv::Mat(msg->height, msg->width, CV_8UC3, msg->data.data());
@@ -44,7 +44,11 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
                 armors = detector_->DetectArmor(raw_image);
             }
 
-            PublishArmors(armors);
+            if (!armors.empty()) {
+                PublishArmors(armors);
+            } else {
+                RCLCPP_INFO(this->get_logger(), "No armor detected");
+            }
         }
     );
 }
@@ -58,7 +62,7 @@ std::unique_ptr<Detector> ArmorDetectorNode::CreateDetector() {
     auto&& binary_threshold = declare_parameter("binary_threshold", 100, param_desc);
     auto&& light_contour_threshold = declare_parameter("light_contour_threshold", 100, param_desc);
 
-    auto&& enemy_color = declare_parameter("enemy_color", 'r');
+    auto&& enemy_color = declare_parameter("enemy_color", 'b');
     auto&& confidence_threshold = declare_parameter("confidence_threshold", 0.7);
     auto&& camera_matrix = declare_parameter("camera_matrix", std::vector<double> { 1302.9388992859376, 0, 609.2298064340857, 0, 2515.6912302455735, 467.0345949712323, 0, 0, 1 });
     auto&& pkg_path = ament_index_cpp::get_package_share_directory("armor_detector");
@@ -148,7 +152,7 @@ void ArmorDetectorNode::PublishDebugInfo(const sensor_msgs::msg::Image::SharedPt
     armor_marker_pub_->publish(marker_array_);
 }
 
-void ArmorDetectorNode::PublishArmors(std::vector<Armor>& armors) {
+void ArmorDetectorNode::PublishArmors(const std::vector<Armor>& armors) {
     auto_aim_interfaces::msg::Armors armors_msg;
     for (auto& armor: armors) {
         auto_aim_interfaces::msg::Armor armor_msg;

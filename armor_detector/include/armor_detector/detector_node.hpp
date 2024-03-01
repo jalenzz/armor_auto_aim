@@ -28,7 +28,7 @@ private:
 
     void PublishDebugInfo(const sensor_msgs::msg::Image::SharedPtr& image_msg);
 
-    void PublishArmors(std::vector<Armor>& armors);
+    void PublishArmors(const std::vector<Armor>& armors);
 
     void InitMarkers();
 
