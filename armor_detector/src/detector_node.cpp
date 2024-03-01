@@ -8,6 +8,7 @@ namespace armor {
 ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
     Node("armor_detector", options) {
     detector_ = CreateDetector();
+    InitMarkers();
 
     // 监视 Debug 参数变化
     debug_ = declare_parameter("debug", false);
@@ -80,6 +81,7 @@ std::unique_ptr<Detector> ArmorDetectorNode::CreateDetector() {
 void ArmorDetectorNode::CreateDebugPublishers() {
     debug_lights_pub_ = create_publisher<auto_aim_interfaces::msg::DebugLights>("/detector/debug_lights", 10);
     debug_armors_pub_ = create_publisher<auto_aim_interfaces::msg::DebugArmors>("/detector/debug_armors", 10);
+    armor_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/detector/marker", 10);
     binary_img_pub_ = image_transport::create_publisher(this, "/detector/binary_img");
     number_img_pub_ = image_transport::create_publisher(this, "/detector/number_img");
     result_img_pub_ = image_transport::create_publisher(this, "/detector/result_img");
@@ -88,6 +90,7 @@ void ArmorDetectorNode::CreateDebugPublishers() {
 void ArmorDetectorNode::DestroyDebugPublishers() {
     debug_lights_pub_.reset();
     debug_armors_pub_.reset();
+    armor_marker_pub_.reset();
     binary_img_pub_.shutdown();
     number_img_pub_.shutdown();
     result_img_pub_.shutdown();
@@ -123,10 +126,24 @@ void ArmorDetectorNode::PublishDebugInfo(const sensor_msgs::msg::Image::SharedPt
         debug_armor_msg.set__light_angle_diff(armor.light_angle_diff);
         debug_armor_msg.set__angle(armor.angle);
         debug_armors_msg.data.push_back(debug_armor_msg);
+
+        // Fill the markers
+        if (armor.type != ArmorType::INVALID) {
+            armor_marker_.id++;
+            armor_marker_.scale.y = armor.type == ArmorType::SMALL ? 0.135 : 0.23;
+            armor_marker_.pose = armor.pose;
+            text_marker_.id++;
+            text_marker_.pose.position = armor.pose.position;
+            text_marker_.pose.position.y -= 0.1;
+            text_marker_.text = armor.classification_result;
+            marker_array_.markers.emplace_back(armor_marker_);
+            marker_array_.markers.emplace_back(text_marker_);
+        }
     }
 
     debug_lights_pub_->publish(debug_lights_msg);
     debug_armors_pub_->publish(debug_armors_msg);
+    armor_marker_pub_->publish(marker_array_);
 }
 
 void ArmorDetectorNode::PublishArmors(std::vector<Armor>& armors) {
@@ -141,6 +158,28 @@ void ArmorDetectorNode::PublishArmors(std::vector<Armor>& armors) {
     }
 
     armors_pub_->publish(armors_msg);
+}
+
+void ArmorDetectorNode::InitMarkers() {
+    armor_marker_.ns = "armors";
+    armor_marker_.action = visualization_msgs::msg::Marker::ADD;
+    armor_marker_.type = visualization_msgs::msg::Marker::CUBE;
+    armor_marker_.scale.x = 0.05;
+    armor_marker_.scale.z = 0.125;
+    armor_marker_.color.a = 1.0;
+    armor_marker_.color.g = 0.5;
+    armor_marker_.color.b = 1.0;
+    armor_marker_.lifetime = rclcpp::Duration::from_seconds(0.1);
+
+    text_marker_.ns = "classification";
+    text_marker_.action = visualization_msgs::msg::Marker::ADD;
+    text_marker_.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    text_marker_.scale.z = 0.1;
+    text_marker_.color.a = 1.0;
+    text_marker_.color.r = 1.0;
+    text_marker_.color.g = 1.0;
+    text_marker_.color.b = 1.0;
+    text_marker_.lifetime = rclcpp::Duration::from_seconds(0.1);
 }
 
 } // namespace armor
