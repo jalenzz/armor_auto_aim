@@ -24,11 +24,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DebugLights.msg"
   "msg/DebugArmor.msg"
   "msg/DebugArmors.msg"
+  "msg/IgnoreClasses.msg"
 
   DEPENDENCIES
     std_msgs
     geometry_msgs
 )
-
 
 ament_package()

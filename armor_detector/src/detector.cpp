@@ -152,6 +152,10 @@ cv::Mat Detector::GetAllNumbersImage() {
     }
 }
 
+void Detector::UpdateIgnoreClasses(const std::vector<std::string>& ignore_classes) {
+    classifier_->UpdateIgnoreClasses(ignore_classes);
+}
+
 void Detector::DrawResult(const cv::Mat& input) {
     for (const auto& light: lights_) {
         cv::Point2f vertices[4];

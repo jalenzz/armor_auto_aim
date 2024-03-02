@@ -27,6 +27,13 @@ public:
      */
     void Classify(std::vector<Armor>& armors);
 
+    /**
+     * @brief 更新忽略的类别
+     *
+     * @param ignore_classes 忽略的类别
+     */
+    void UpdateIgnoreClasses(const std::vector<std::string>& ignore_classes);
+
 private:
     float confidence_threshold_;              // 数字分类置信度阈值
     cv::dnn::Net net_;                        // 数字分类网络

@@ -11,6 +11,7 @@
 #include "auto_aim_interfaces/msg/armors.hpp"
 #include "auto_aim_interfaces/msg/debug_armors.hpp"
 #include "auto_aim_interfaces/msg/debug_lights.hpp"
+#include "auto_aim_interfaces/msg/ignore_classes.hpp"
 
 namespace armor {
 class ArmorDetectorNode: public rclcpp::Node {
@@ -51,5 +52,6 @@ private:
     std::unique_ptr<Detector> detector_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
     rclcpp::Publisher<auto_aim_interfaces::msg::Armors>::SharedPtr armors_pub_;
+    rclcpp::Subscription<auto_aim_interfaces::msg::IgnoreClasses>::SharedPtr ignore_classes_sub_;
 };
 } // namespace armor

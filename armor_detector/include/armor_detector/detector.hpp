@@ -53,7 +53,17 @@ public:
         return light_contour_binary_image_;
     }
 
+    /**
+     * @brief 获取所有数字的图像
+     * @return 所有数字的图像
+     */
     cv::Mat GetAllNumbersImage();
+
+    /**
+     * @brief 更新忽略的类别
+     * @param ignore_classes 忽略的类别
+     */
+    void UpdateIgnoreClasses(const std::vector<std::string>& ignore_classes);
 
 private:
     /**

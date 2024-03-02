@@ -26,6 +26,14 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
 
     armors_pub_ = create_publisher<auto_aim_interfaces::msg::Armors>("/detector/armors", rclcpp::SensorDataQoS());
 
+    ignore_classes_sub_ = create_subscription<auto_aim_interfaces::msg::IgnoreClasses>(
+        "/detector/ignore_classes",
+        rclcpp::SensorDataQoS(),
+        [this](const auto_aim_interfaces::msg::IgnoreClasses::SharedPtr msg) {
+            detector_->UpdateIgnoreClasses(msg->ignore_classes);
+        }
+    );
+
     image_sub_ = create_subscription<sensor_msgs::msg::Image>(
         "image_pub",
         rclcpp::SensorDataQoS(),
@@ -53,7 +61,8 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions& options):
     );
 }
 
-std::unique_ptr<Detector> ArmorDetectorNode::CreateDetector() {
+std::unique_ptr<Detector>
+ArmorDetectorNode::CreateDetector() {
     rcl_interfaces::msg::ParameterDescriptor param_desc;
     param_desc.integer_range.resize(1);
     param_desc.integer_range[0].step = 1;
