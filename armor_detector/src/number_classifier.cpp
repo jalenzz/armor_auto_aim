@@ -132,4 +132,8 @@ void NumberClassifier::Classify(std::vector<Armor>& armors) {
     );
 }
 
+void NumberClassifier::UpdateIgnoreClasses(const std::vector<std::string>& ignore_classes) {
+    ignore_classes_ = ignore_classes;
+}
+
 } // namespace armor
